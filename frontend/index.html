@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LOF/GOF Predictor</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 32px 16px 64px;
+      line-height: 1.5;
+    }
+    h1 { margin-bottom: 4px; }
+    label { display: block; font-weight: 600; margin-top: 16px; }
+    textarea, input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px;
+      margin-top: 6px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-family: monospace;
+    }
+    input[type="number"] { max-width: 200px; }
+    .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    button {
+      margin-top: 20px;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 8px;
+      background: #2563eb;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    pre {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 12px;
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+    .muted { color: #64748b; font-size: 0.9rem; }
+    .card { border: 1px solid #e2e8f0; padding: 16px; border-radius: 10px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>LOF/GOF Predictor</h1>
+  <p class="muted">Enter a protein sequence, the 1-based residue position, and the alternate amino acid. The API computes ESM2 embeddings for the reference and mutated sequences and returns LOF/GOF/NEUTRAL probabilities.</p>
+
+  <label for="apiBase">API base URL (Render)</label>
+  <input id="apiBase" type="text" placeholder="https://your-service.onrender.com" />
+  <p class="muted">Defaults to <code>http://localhost:8000</code> if left empty.</p>
+
+  <label for="sequence">Protein sequence (letters only)</label>
+  <textarea id="sequence" rows="6" spellcheck="false" placeholder="ACDEFGHIKLMNPQRSTVWY"></textarea>
+
+  <div class="row">
+    <div>
+      <label for="position">Position (1-based)</label>
+      <input id="position" type="number" min="1" value="1" />
+    </div>
+    <div>
+      <label for="alt">Alternate amino acid</label>
+      <input id="alt" type="text" maxlength="1" placeholder="A" />
+    </div>
+  </div>
+
+  <button id="predictBtn">Predict</button>
+
+  <div id="result" class="card" style="display:none;">
+    <div id="summary"></div>
+    <pre id="jsonOutput"></pre>
+  </div>
+
+  <script>
+    const btn = document.getElementById("predictBtn");
+    const resultCard = document.getElementById("result");
+    const summary = document.getElementById("summary");
+    const jsonOutput = document.getElementById("jsonOutput");
+
+    async function predict() {
+      btn.disabled = true;
+      summary.textContent = "Running prediction...";
+      resultCard.style.display = "block";
+      jsonOutput.textContent = "";
+
+      const apiBase = (document.getElementById("apiBase").value || "http://localhost:8000").replace(/\/$/, "");
+      const sequence = document.getElementById("sequence").value.trim();
+      const position = parseInt(document.getElementById("position").value, 10);
+      const alt = document.getElementById("alt").value.trim();
+
+      if (!sequence || !alt) {
+        summary.textContent = "Sequence and alternate amino acid are required.";
+        btn.disabled = false;
+        return;
+      }
+
+      try {
+        const res = await fetch(`${apiBase}/predict`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sequence, position, alt })
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || `HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        summary.textContent = `Prediction: ${data.label}`;
+        jsonOutput.textContent = JSON.stringify(data, null, 2);
+      } catch (error) {
+        summary.textContent = `Error: ${error.message}`;
+        jsonOutput.textContent = "";
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    btn.addEventListener("click", predict);
+  </script>
+</body>
+</html>

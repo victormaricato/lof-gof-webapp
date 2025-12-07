@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: lof-gof-predictor-api
+    env: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: ESM_MODEL_NAME
+        value: facebook/esm2_t33_650M_UR50D
+      - key: CLASSIFIER_PATH
+        value: model/lgb_esm2.pkl
+      - key: TORCH_NUM_THREADS
+        value: "1"
+      - key: MAX_SEQUENCE_LENGTH
+        value: "1024"
