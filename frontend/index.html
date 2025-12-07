@@ -53,8 +53,8 @@
   <p class="muted">Enter a protein sequence, the 1-based residue position, and the alternate amino acid. The API computes ESM2 embeddings for the reference and mutated sequences and returns LOF/GOF/NEUTRAL probabilities.</p>
 
   <label for="apiBase">API base URL (Render)</label>
-  <input id="apiBase" type="text" placeholder="https://your-service.onrender.com" />
-  <p class="muted">Defaults to <code>http://localhost:8000</code> if left empty.</p>
+  <input id="apiBase" type="text" value="https://lof-gof-predictor-api.onrender.com" />
+  <p class="muted">Uses the deployed Render API by default.</p>
 
   <label for="sequence">Protein sequence (letters only)</label>
   <textarea id="sequence" rows="6" spellcheck="false" placeholder="ACDEFGHIKLMNPQRSTVWY"></textarea>
